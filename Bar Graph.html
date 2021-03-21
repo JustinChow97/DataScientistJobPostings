@@ -1,0 +1,160 @@
+<!-- Source: https://www.d3-graph-gallery.com/graph/lollipop_button_data_csv.html -->
+
+
+<!-- Code from d3-graph-gallery.com -->
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<!-- Add 2 buttons -->
+<button onclick="update('var1')">Applied Scientist</button>
+<button onclick="update('var2')">Data Analyst</button>
+<button onclick="update('var3')">Data Engineer</button>
+<button onclick="update('var4')">Data Scientist</button>
+<button onclick="update('var5')">ML Engineer</button>
+<button onclick="update('var6')">ML Scientist</button>
+
+<!--<defs>-->
+<!--    <pattern id="amazon" height="100%" width="100%" patternContentUnits="objectBoundingBox">-->
+<!--        <image height="1" width="1" preserveAspectRatio="none" xmlns:xlink="http://www.w3.org/1999/xlink"-->
+<!--               xlink:href="amazon.png"></image>-->
+<!--    </pattern>-->
+<!--</defs>-->
+
+
+<!-- Create a div where the graph will take place -->
+<div id="my_dataviz"></div>
+
+
+<script>
+
+
+
+
+// set the dimensions and margins of the graph
+var margin = {top: 30, right: 30, bottom: 70, left: 60},
+    width = 460 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#my_dataviz")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+// Initialize the X axis
+var x = d3.scaleBand()
+  .range([ 0, width ])
+  .padding(1);
+var xAxis = svg.append("g")
+  .attr("transform", "translate(0," + height + ")")
+
+// Initialize the Y axis
+var y = d3.scaleLinear()
+  .range([ height, 0]);
+var yAxis = svg.append("g")
+  .attr("class", "myYaxis")
+
+
+var defs = svg.append("defs");
+
+// defs.append("pattern")
+//     .attr("id", "Amazon")
+//     .attr("height", "100%")
+//     .attr("width", "100%")
+//     .attr("patternContentUnits", "objectBoundingBox")
+//     .append("image")
+//     .attr("height", "1")
+//     .attr("width", "1")
+//     .attr("preserveAspectRatio", "none")
+//     .attr("xmlns", "http://www.w3.org/1999/xLink")
+//     .attr("xlink:href", "amazon.png")
+
+
+
+// A function that create / update the plot for a given variable:
+function update(selectedVar) {
+
+  // Parse the Data
+  d3.csv("CompanyData.csv", function(data) {
+
+    // X axis
+    x.domain(data.map(function(d) { return d.group; }))
+    xAxis.transition().duration(1000).call(d3.axisBottom(x))
+
+    // Add Y axis
+    y.domain([0, d3.max(data, function(d) { return +d[selectedVar] }) ]);
+    yAxis.transition().duration(1000).call(d3.axisLeft(y));
+
+    // variable u: map data to existing circle
+    var j = svg.selectAll(".myLine")
+      .data(data)
+    // update lines
+    j
+      .enter()
+      .append("line")
+      .attr("class", "myLine")
+      .merge(j)
+      .transition()
+      .duration(1000)
+        .attr("x1", function(d) { console.log(x(d.group)) ; return x(d.group); })
+        .attr("x2", function(d) { return x(d.group); })
+        .attr("y1", y(0))
+        .attr("y2", function(d) { return y(d[selectedVar]); })
+        .attr("stroke", "grey")
+
+  // Source: https://www.youtube.com/watch?v=FUJjNG4zkWY&t=612s&ab_channel=JonathanSoma
+  defs.selectAll(".company-pattern").data(data)
+      .enter().append("pattern")
+      .attr("class", "company-pattern")
+      .attr("id", function (d) {
+          return d.group})
+      .attr("height", "100%")
+      .attr("width", "100%")
+      .attr("patternContentUnits", "objectBoundingBox")
+      .append("image")
+      .attr("height", "1")
+      .attr("width", "1")
+      .attr("preserveAspectRatio", "none")
+      .attr("xmlns", "http://www.w3.org/1999/xLink")
+      .attr("xlink:href", function(d) {
+          console.log(d.image_path);
+          return (d.image_path)});
+
+
+    // variable u: map data to existing circle
+    var u = svg.selectAll("circle")
+      .data(data)
+    // update bars
+    u
+      .enter()
+      .append("circle")
+      .merge(u)
+      .transition()
+      .duration(1000)
+        .attr("cx", function(d) {
+            //console.log ("url(#" +d.group+")");
+            return x(d.group); })
+        .attr("cy", function(d) { return y(d[selectedVar]); })
+        .attr("r", 20)
+        .attr("fill", function(d) {
+            //console.log ("url(#" +d.group+")");
+            return ("url(#" +d.group+")"); });
+
+
+  })
+
+
+
+
+}
+
+// Initialize plot
+update('var1')
+
+</script>
