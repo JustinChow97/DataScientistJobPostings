@@ -31,8 +31,6 @@
 <script>
 
 
-
-
 // set the dimensions and margins of the graph
 var margin = {top: 30, right: 30, bottom: 70, left: 60},
     width = 460 - margin.left - margin.right,
@@ -63,25 +61,12 @@ var yAxis = svg.append("g")
 
 var defs = svg.append("defs");
 
-// defs.append("pattern")
-//     .attr("id", "Amazon")
-//     .attr("height", "100%")
-//     .attr("width", "100%")
-//     .attr("patternContentUnits", "objectBoundingBox")
-//     .append("image")
-//     .attr("height", "1")
-//     .attr("width", "1")
-//     .attr("preserveAspectRatio", "none")
-//     .attr("xmlns", "http://www.w3.org/1999/xLink")
-//     .attr("xlink:href", "amazon.png")
-
-
 
 // A function that create / update the plot for a given variable:
 function update(selectedVar) {
 
   // Parse the Data
-  d3.csv("CompanyData.csv", function(data) {
+  d3.csv("CompanyData1.csv", function(data) {
 
     // X axis
     x.domain(data.map(function(d) { return d.group; }))
