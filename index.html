@@ -1,102 +1,248 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
-    <script type="text/javascript" src="d3/d3.v3.js"></script>
+<meta charset="utf-8">
+<style>
+    body {
+        width: 940px;
+        margin: 0 auto;
+        margin-top: 2em;
+    }
 
-    <title>d3 Examples</title>
-</head>
+    svg {
+        font: 10px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: black;
+        shape-rendering: crispEdges;
+    }
+</style>
 <body>
-
-<header>
-    <div class="container">
-        <div class="row">
-            <div class="col-md-2">
-                <img src="resources/d3logo.png">
-            </div>
-            <div class="col-md-10">
-                <h1 class="logo">D3 Examples</h1>
-                <h4>Richard Dalton</h4>
-                <div class="btn-group btn-group-md" role="group" aria-label="...">
-                    <a href="index.html" class="btn btn-default" role="button">Home</a>
-                    <a href="svg.html" class="btn btn-default" role="button">SVG</a>
-                    <a href="barChart.html" class="btn btn-default" role="button">Bar</a>
-                    <a href="pieChart.html" class="btn btn-default" role="button">Pie</a>
-                    <a href="bubbleChart.html" class="btn btn-default" role="button">Bubble</a>
-                    <a href="force.html" class="btn btn-default" role="button">Force</a>
-                    <a href="globe.html" class="btn btn-default" role="button">Globe</a>
-                    <a href="http://www.d3js.org" class="btn btn-default" role="button">D3.js</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</header>
-
-<div class="container">
-    <h3>Data Driven Documents</h3>
-    <p>D3 allows document elements to be generated from data. Hence the name Data Driven Documents (D3).</p>
-    <p>In the example below, and array of json key-value pairs are rendered as headings and paragraphs. We append a div
-    for each data item, and then within that div we render a heading for the key and a paragraph for the value.</p>
-
-    <div class="col-md-6">
-        <div id="draw_here"></div>
-    </div>
-
-    <div class="col-md-6">
-<pre>
-    data = [
-        {"key": "First Heading", "value":"First Paragraph"},
-        {"key": "Second Heading", "value":"Second Paragraph"},
-        {"key": "Third Heading", "value":"Third Paragraph"},
-        {"key": "Fourth Heading", "value":"Fourth Paragraph"},
-        {"key": "Fifth Heading", "value":"Fifth Paragraph"},
-    ];
-
-    //Create SVG element
-    var doc = d3.select("#draw_here");
-
-    var doc_item = doc.selectAll("div")
-            .data(data)
-            .enter()
-            .append("div");
-
-    doc_item.append("h4").text(function (d) {
-                return d.key;
-            });
-
-    doc_item.append("p").text(function (d) {
-        return d.value;
-    })
-</pre>
-    </div>
-</div>
-
+<script src="d3.js"></script>
+<script src="topojson.v1.min.js"></script>
 <script>
-    data = [
-        {"key": "First Heading", "value":"First Paragraph"},
-        {"key": "Second Heading", "value":"Second Paragraph"},
-        {"key": "Third Heading", "value":"Third Paragraph"},
-        {"key": "Fourth Heading", "value":"Fourth Paragraph"},
-        {"key": "Fifth Heading", "value":"Fifth Paragraph"},
-    ];
+    // let d3 = import(d3.js);
+    /**
+     * copied from the following resources:
+     * http://bl.ocks.org/micahstubbs/281d7b7a7e39a9b59cf80f1b8bd41a72
+     * http://bl.ocks.org/msbarry/9911363
+     * http://bl.ocks.org/weiglemc/6185069
+     *
+    **/
 
-    //Create SVG element
-    var doc = d3.select("#draw_here");
+	const margin = {top: 0, right: 0, bottom: 0, left: 0};
+	const width = 960 - margin.left - margin.right;
+	const height = 1000 - margin.top - margin.bottom;
 
-    var doc_item = doc.selectAll("div")
-            .data(data)
-            .enter()
-            .append("div");
+    const color = d3.scaleThreshold()
+        .domain([2, 3, 4, 5, 6, 7, 8])
+        .range( d3.schemeBlues[7] )
+        .unknown(d3.rgb(255,200,200));
 
-    doc_item.append("h4").text(function (d) {
-                return d.key;
+	const svg = d3.select('body')
+			.append('svg')
+			.attr('width', width)
+			.attr('height', height);
+
+    const map = svg
+        .append('g')
+        .attr('class', 'map');
+
+    const scatterplot = svg
+        .append('g')
+        .attr('class', 'scatterplot')
+        .attr("transform", "translate(100,550)");
+
+    const projection = d3.geoMercator()
+			.scale(130)
+			.translate( [width / 2, height / 1.5/2]);
+
+	const path = d3.geoPath().projection(projection);
+
+    Promise.all([
+        d3.csv('who.csv'),
+        d3.json('world_countries.json'),
+        d3.tsv('world_population.tsv')
+    ]).then(function(data) {
+		const fertilityById = {};
+
+        let who = data[0];
+        let countries = data[1];
+        let population = data[2];
+
+        let fieldColor = 'Total fertility rate (per woman)';
+        let fieldXAxis = "Urban_population_growth";
+        let fieldYAxis = "Urban_population_pct_of_total";
+
+        who.forEach(d => {
+            if(d[fieldColor] == '') {
+                d[fieldColor] = undefined;
+            };
+        });
+
+        population.forEach(d =>
+        {
+            var res = who.find(e =>
+            {
+                return e.Country == d.name;
             });
+            if(typeof res !== 'undefined') {
+                res.id = d.id;
+            }
+        });
 
-    doc_item.append("p").text(function (d) {
-        return d.value;
-    })
+        who.forEach(d => { fertilityById[d.id] = +d[fieldColor]; });
+        countries.features.forEach(d => { d.population = fertilityById[d.id] });
+
+        svg.append('g')
+				.attr('class', 'countries')
+				.selectAll('path')
+				.data(countries.features)
+				.enter().append('path')
+                .attr("class", d => { return "COUNTRY-CODE-"+d.id;} )
+				.attr('d', path)
+				.style('fill', d => color(fertilityById[d.id]))
+				.style('stroke', 'white')
+				.style('opacity', 0.8)
+				.style('stroke-width', 0.3)
+				.on('mouseover',function(d){
+                    // d3.selectAll(".Country")
+                    //     .transition()
+                    //     .duration(200)
+                    //     .style("opacity", .5)
+                    // d3.select(this)
+                    //     .transition()
+                    //     .duration(200)
+                    //     .style("opacity", 1)
+                    //     .style("stroke", "black")
+                })
+				.on('mouseout', function(d){});
+
+		svg.append('path')
+				.datum(topojson.mesh(countries.features, (a, b) => a.id !== b.id))
+				.attr('class', 'names')
+				.attr('d', path);
+
+        // setup x
+        var xValue = function(d) { return d[fieldXAxis];}, // data -> value
+            xScale = d3.scaleLinear().range([0, height/2-100]), // value -> display
+            xMap = function(d) { return xScale(xValue(d));}, // data -> display
+            xAxis = d3.axisBottom().scale(xScale);
+
+        // setup y
+        var yValue = function(d) { return d[fieldYAxis];}, // data -> value
+            yScale = d3.scaleLinear().range([height/2-100, 0]), // value -> display
+            yMap = function(d) { return yScale(yValue(d));}, // data -> display
+            yAxis = d3.axisLeft().scale(yScale);
+
+        // don't want dots overlapping axis, so add in buffer to data domain
+        xScale.domain([-2, 8]);
+        yScale.domain([0, 100]);
+
+        // x-axis
+        scatterplot.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + (height/2-100) + ")")
+            .call(xAxis)
+            .append("text")
+            .attr("class", "label")
+            .attr("x", xScale(8))
+            .attr("y", -6)
+            .style("text-anchor", "end")
+            .text(fieldXAxis.replace(/_/g, " "));
+
+        // y-axis
+        scatterplot.append("g")
+            .attr("class", "y axis")
+            .call(yAxis)
+            .append("text")
+            .attr("class", "label")
+            .attr("transform", "rotate(-90)")
+            .attr("x", 0)
+            .attr("y", yScale(100))
+            .attr("dy", "1.5em")
+            .style("text-anchor", "end")
+            .text(fieldYAxis.replace(/_/g, " "));
+
+        // Create tooltip
+        var tooltip = d3.select("body")
+            .append("div")
+            .style("position", "absolute")
+
+            //.style("opacity",0)
+            .style("visibility", "hidden")
+            .attr("class", "tooltip")
+            .style("background-color", "white")
+            .style("border", "solid")
+            .style("border-width", "2px")
+            .style("border-radius", "5px")
+            .style("padding", "5px");
+
+
+        // draw dots
+        scatterplot.selectAll(".dot")
+            .data(who)
+            .enter().append("circle")
+            .attr("class", d => { return "dot COUNTRY-"+d.Country; } )
+            .attr("r", 3.5)
+            .attr("cx", xMap)
+            .attr("cy", yMap)
+            .style("fill", function(d) { return color(d[fieldColor]);})
+            .on("mouseover", function(d){
+
+                d3.select(this)
+                    .style("stroke", "black")
+                    .style("opacity", "1")
+                console.log(d)
+                return tooltip
+                    .style("visibility", "visible")
+                    .text(d.Country + " Fertility Rate: " + fertilityById[d.id]);
+
+            })
+            .on("mousemove", function(){return tooltip.style("top", (event.pageY-10)+"px").style("left",(event.pageX+10)+"px");})
+            .on("mouseout", function(){
+                d3.select(this)
+                    .style("stroke", "none")
+                    .style("opacity", 0.8)
+                return tooltip.style("visibility", "hidden");});
+
+
+
+        // draw legend
+        var legend = scatterplot.append("g").attr("class", "legend-group").selectAll(".legend")
+            .data(color.domain())
+            .enter().append("g")
+            .attr("class", "legend")
+            .attr("transform", function(d, i) { return "translate(-100," + (i+1) * 20 + ")"; });
+
+        // draw legend colored rectangles
+        legend.append("rect")
+            .attr("x", width/2 + 4)
+            .attr("width", 18)
+            .attr("height", 18)
+            .style("fill", (d,i)=> color(d-0.0001));
+
+        // draw legend text
+        legend.append("text")
+            .attr("x", width/2 - 3)
+            .attr("y", 9)
+            .attr("dy", ".35em")
+            .style("text-anchor", "end")
+            .text(function(d) { return "< "+d;});
+
+        scatterplot.select("g.legend-group")
+            .append("g")
+            .attr("class", "legend")
+            .attr("transform", "translate(-100,0)")
+            .append("text")
+            .attr("x", width/2+22)
+            .attr("y", 0)
+            .attr("dy", "1.5em")
+            .style("text-anchor", "end")
+            .text(fieldColor);
+    });
+
 </script>
-
 </body>
 </html>
