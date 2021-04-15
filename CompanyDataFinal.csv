@@ -1,0 +1,11 @@
+﻿group,var1,var2,var3,var4,var5,var6,image_path,total,rating,salary
+Amazon,7,,4,28,2,,amazon.png,41,3.9,$99K-$174K
+Apple,,,10,28,12,4,apple.png,54,4.1,$100K-$154K
+Facebook,,1,,20,,,facebook.png,21,4.5,$102K-$164K
+IBM,,9,,43,,,ibm.png,52,3.7,$99K-$174K
+Microsoft,1,,,,,,microsoft.png,1,4.3,$116K-$181K
+PayPal,,,2,5,1,,paypal.png,8,3.9,$102K-$179K
+Google,,,,7,,,google.png,7,4.4,$116K-$152K
+Deloitte,,,1,2,,,deloitte.png,3,3.9,$73K-$111K
+SAP,,,,2,,,sap.png,2,4.6,$148K-$174K
+NVIDIA,,2,1,1,,,nvidia.png,4,4.6,$135K-$214K
